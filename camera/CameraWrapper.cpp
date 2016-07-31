@@ -146,22 +146,6 @@ static char *camera_fixup_getparams(int id, const char *settings)
     params.dump();
 #endif
 
-    if (id == BACK_CAMERA) {
-        params.set(CameraParameters::KEY_QC_SUPPORTED_TOUCH_AF_AEC, "touch-on,touch-off");
-    }
-
-    params.set(CameraParameters::KEY_QC_SUPPORTED_FACE_DETECTION, "on,off");
-
-    if (get_product_device() == FALCON || get_product_device() == PEREGRINE) {
-        if (id == BACK_CAMERA) {
-            params.set(CameraParameters::KEY_QC_SUPPORTED_HFR_SIZES, "1296x728");
-            params.set(CameraParameters::KEY_QC_SUPPORTED_VIDEO_HIGH_FRAME_RATE_MODES, "60,off");
-        }
-    } else {
-        params.set(CameraParameters::KEY_QC_SUPPORTED_HFR_SIZES, "1296x728,1296x728,720x480");
-        params.set(CameraParameters::KEY_QC_SUPPORTED_VIDEO_HIGH_FRAME_RATE_MODES, "60,90,120,off");
-    }
-
     if (!(get_product_device() == FALCON || get_product_device() == PEREGRINE) ||
             id == BACK_CAMERA) {
         /* The FFC of falcon and peregrine doesn't support scene modes */
@@ -169,12 +153,6 @@ static char *camera_fixup_getparams(int id, const char *settings)
                 "auto,action,portrait,landscape,night,night-portrait,theatre"
                 "candlelight,beach,snow,sunset,steadyphoto,fireworks,sports,party,"
                 "auto_hdr,hdr,asd,backlight,flowers,AR");
-    }
-
-    /* HFR video recording workaround */
-    const char *recordingHint = params.get(CameraParameters::KEY_RECORDING_HINT);
-    if (recordingHint && !strcmp(recordingHint, "true")) {
-        params.set(CameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE, videoHfr);
     }
 
 #if !LOG_NDEBUG
@@ -197,23 +175,6 @@ static char *camera_fixup_setparams(int id, const char *settings)
     ALOGV("%s: original parameters:", __FUNCTION__);
     params.dump();
 #endif
-
-    /*
-     * The video-hfr parameter gets removed from the parameters list by the
-     * vendor call, unless the Motorola camera app is used. Save the value
-     * so that we can later return it.
-     */
-    const char *hfr = params.get(CameraParameters::KEY_QC_VIDEO_HIGH_FRAME_RATE);
-    snprintf(videoHfr, sizeof(videoHfr), "%s", hfr ? hfr : "off");
-
-    if (get_product_device() == TITAN || get_product_device() == THEA) {
-        const char *sceneMode = params.get(CameraParameters::KEY_SCENE_MODE);
-        if (sceneMode != NULL) {
-            if (!strcmp(sceneMode, CameraParameters::SCENE_MODE_HDR)) {
-                params.remove(CameraParameters::KEY_QC_ZSL);
-            }
-        }
-    }
 
 #if !LOG_NDEBUG
     ALOGV("%s: fixed parameters:", __FUNCTION__);
